@@ -64,6 +64,8 @@ def animate_time_domain_plot(audio_from_one_mic, fs, path_to_music_file, play_au
     line, = ax.plot(time, audio_from_one_mic)
     ax.set_xlabel('Time (s)')
     ax.set_ylabel('Amplitude')
+
+    
     
     # Initialize the vertical line
     vertical_line = ax.axvline(x=time[0], color='r', linestyle='--')
@@ -118,12 +120,6 @@ def detect_motor_sound_trigger(audio_from_one_mic, fs, threshold=0.2):
 
 
 
-
-
-
-
-
-
 def load_wav_to_npy(path_directory, input_file_list, save_directory):
 # data loader 
 # input: path directory, good list, bad list
@@ -175,9 +171,26 @@ def load_npy_files(path_directory, input_file_list):
 
     return total_trials_all_mic
 
-
 # Function to animate spectrogram with vertical bar indicating the current time with the given audio 
-def animate_spectrogram(audio, fs, save_animation_flag, save_filename):
+def animate_spectrogram(audio, fs, path_to_music_file=None, play_audio=False , play_video = False, video_filename = None):
+
+
+    def play_music(path):
+        # Load and play music
+        song = AudioSegment.from_wav(path)
+        play(song)
+
+
+    if play_audio:
+        # Play music from path to music file in a separate thread
+        play_thread = threading.Thread(target=play_music, args=(path_to_music_file,))
+        play_thread.start()
+
+    if play_video and video_filename is not None:
+        # Play video in a separate thread
+        video_thread = threading.Thread(target=utils_video.play_video, args=(video_filename,))
+        video_thread.start()
+
     fig, ax = plt.subplots(figsize=(6, 4))
     fig.suptitle('Spectrogram Animation (Mic 1)', y=1.0, fontsize=10)
 
@@ -211,41 +224,31 @@ def animate_spectrogram(audio, fs, save_animation_flag, save_filename):
     # Add vertical line to indicate current time
     line = ax.axvline(0, color='r')
 
-    # print(f"audio_len_msec/S_db_col {audio_len_msec/S_db_col}, where audio_len_msec {audio_len_msec} and S_db_col {S_db_col}")
-
+    interval_msec = 250
     # Function to update the vertical line
     def update_line(frame):
-        # global music_thread_started
         
-
-        # if not music_thread_started:
-            # music_thread.start()
-            # music_thread_started = True
-
-        fine_tuned_time_param = 1
-        current_time = frame * audio_len_msec / S_db_col/ 1000 *fine_tuned_time_param
-        print(f"current_time: {current_time}, frame : {frame}/{S_db_col}")
-        
-        # Update the vertical line to the current time
-        line.set_xdata(current_time)
+        if frame < 31:
+            current_frame = frame*interval_msec/1000 +int(math.ceil(interval_msec/1000))
+            print(f" frame: {frame}, current_frame: {current_frame}")
             
+            # Update the vertical line to the current time
+            line.set_xdata(current_frame)
+                
 
-        return line,
+            return line,
 
     # Animate the vertical line
-    ani = FuncAnimation(fig=fig, func=update_line, frames=S_db_col, interval=audio_len_msec/S_db_col,  repeat=False)
+    ani = FuncAnimation(fig=fig, func=update_line, frames=S_db_col, interval=interval_msec,  repeat=False)
   
     
     plt.tight_layout(rect=[0, 0, 0.9, 1])  # Ensure proper spacing and accommodate colorbar
     
-    if save_animation_flag:
-        # Save the animation as a video file (e.g., .mp4)
-        FFwriter = matplotlib.animation.FFMpegWriter(fps=10)
-        ani.save(save_filename, writer = FFwriter)
-
-
-
     plt.show()
+
+    if play_video and video_filename is not None:
+        # Wait for the video to finish playing and close the video window
+        video_thread.join()
 # ================================================================================================
 
 
@@ -354,6 +357,49 @@ def plot_time_domain_all_trial(trimmed_trials_all_mic, fs):
 
                 #add red vertical bar at time 5.7 second
                 axes[row, col].axvline(x=6.2, color='r', linestyle='--')
+
+
+            else:
+                axes[row, col].axis('off')  # Turn off empty subplots
+
+    plt.tight_layout()  # Ensure proper spacing between subplots
+    plt.show()
+
+# Function to plot time domain for mic1_trim of all trials in a 6x4 grid
+def plot_time_domain_all_trial_withlabels(trimmed_trials_all_mic, fs, labels):
+    num_trials = len(trimmed_trials_all_mic)
+
+    fig, axes = plt.subplots(6, 4, figsize=(18, 18))
+    fig.suptitle('Audio Channels Plot for All Trials (Mic 1)', y=1.02)
+
+    for row in range(6):
+        for col in range(4):
+            trial_index = row * 4 + col
+            if trial_index < num_trials:
+                mic1_trim = trimmed_trials_all_mic[trial_index][0]
+
+                time_axis = np.linspace(0, len(mic1_trim) / fs, len(mic1_trim))
+
+                axes[row, col].plot(time_axis, mic1_trim)
+                axes[row, col].set_ylim([-1, 1])
+
+                current_trial = trial_index+1
+                if current_trial in labels['field_good_trial']:
+                    axes[row, col].set_title(f"Trial {[trial_index+1]}", color='green')
+
+                else:
+                    axes[row, col].set_title(f"Trial {[trial_index+1]}", color='red')
+
+
+                #add red vertical bar at time 5.7 second
+                axes[row, col].axvline(x=4, color='r', linestyle='--')
+                axes[row, col].axvline(x=6.2, color='r', linestyle='--')
+
+                
+
+
+
+                
 
 
             else:

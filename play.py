@@ -5,6 +5,7 @@ import numpy as np
 
 import utils_audio
 import utils_video
+import yaml
 
 fs= 44100
 
@@ -132,15 +133,7 @@ def convert_npy_to_wav():
         print(f" saving to {save_filename}")
         utils_audio.save_wav_from_npy(audio_for_trial_i[0], save_filename)
 
-
-if __name__ == "__main__":
-    print(f" -------- start -------- ")
-
-    # trim_raw_npy_files()
-    # visualize_trimmed_files()
-    # convert_npy_to_wav()
-    # =====================================================================================
-
+def animate_timeplot_video():
     #visualize all the trimmed audio
     sync_load_directory = "/rosbag/audio/ISU_audio_dataset/insertion/dataset_field/sync_audio/"
     move_load_directory = "/rosbag/audio/ISU_audio_dataset/insertion/dataset_field/trimmed_video/"
@@ -149,19 +142,91 @@ if __name__ == "__main__":
     #load saved npy files (indices from 1-25)
     total_trial_all_mic = utils_audio.load_npy_files(sync_load_directory, total_list)
 
-    #wait for keyboard input
-    # Wait for user input
-    trial_input = input("Enter a trial number: ")
-    audio_filename = os.path.join(sync_load_directory, f"t{trial_input}.wav")
-    video_filename = os.path.join(move_load_directory, f"{trial_input}.MOV")
-    
-    
+    while True:
+        try:
+            # Wait for user input
+            trial_input = input("Enter a trial number (q to quit): ")
+            
+            if trial_input.lower() == 'q':
+                # Exit the loop if 'q' is entered
+                break
 
-    #animate the time domain plot according to the keyboard input
-    utils_audio.animate_time_domain_plot(total_trial_all_mic[int(trial_input)-1][0], fs, audio_filename, play_audio=True, play_video=True , video_filename=video_filename)
+            audio_filename = os.path.join(sync_load_directory, f"t{trial_input}.wav")
+            video_filename = os.path.join(move_load_directory, f"{trial_input}.MOV")
+
+            # Animate the time domain plot according to the keyboard input
+            utils_audio.animate_time_domain_plot(total_trial_all_mic[int(trial_input) - 1][0], fs, audio_filename, play_audio=True, play_video=True, video_filename=video_filename)
+
+        except KeyboardInterrupt:
+            # Exit the loop if Ctrl+C is pressed
+            break
+
+if __name__ == "__main__":
+    print(f" -------- start -------- ")
+
+    #1.preprocessing audio to trim npy files and then save wav file to play
+    # trim_raw_npy_files()
+    # visualize_trimmed_files()
+    # convert_npy_to_wav()
+
+    #2. animate time domain plot with audio and video
+    # animate_timeplot_video()
+    # =====================================================================================
+
+    # Animate spectrogram
+    sync_load_directory = "/rosbag/audio/ISU_audio_dataset/insertion/dataset_field/sync_audio/"
+    move_load_directory = "/rosbag/audio/ISU_audio_dataset/insertion/dataset_field/trimmed_video/"
+    total_list = numbers_list = [i for i in range(1, 26)]
+    #load saved npy files (indices from 1-25)
+    total_trial_all_mic = utils_audio.load_npy_files(sync_load_directory, total_list)
+
+    while True:
+        try:
+            # Wait for user input
+            trial_input = input("Enter a trial number (q to quit): ")
+            
+            if trial_input.lower() == 'q':
+                # Exit the loop if 'q' is entered
+                break
+
+            audio_filename = os.path.join(sync_load_directory, f"t{trial_input}.wav")
+            video_filename = os.path.join(move_load_directory, f"{trial_input}.MOV")
+
+            # Animate the time domain plot according to the keyboard input
+            utils_audio.animate_spectrogram(total_trial_all_mic[int(trial_input) - 1][0], fs, audio_filename, play_audio=True, play_video=True, video_filename=video_filename)
+
+        except KeyboardInterrupt:
+            # Exit the loop if Ctrl+C is pressed
+            break
+
+
+
+
+
+
+    # =====================================================================================
+    # LABELS AND TIME PLOT
+    #visualize all the trimmed audio
+    # sync_load_directory = "/rosbag/audio/ISU_audio_dataset/insertion/dataset_field/sync_audio/"
+    # move_load_directory = "/rosbag/audio/ISU_audio_dataset/insertion/dataset_field/trimmed_video/"
+    # total_list = numbers_list = [i for i in range(1, 26)]
+
+    # #load labels
+    # label_filename = "/home/marklee/github/audio_classification_corn/labels.yaml"
+
+    # # Load YAML data from a file
+    # with open(label_filename, 'r') as file:
+    #     labels = yaml.load(file, Loader=yaml.FullLoader)
+
+    # print(f"labels {labels}")
+
+    # #load saved npy files (indices from 1-25)
+    # total_trial_all_mic = utils_audio.load_npy_files(sync_load_directory, total_list)
+    # utils_audio.plot_time_domain_all_trial_withlabels(total_trial_all_mic,fs, labels)
+
+    #3. take only the 
 
     
-
     
     # =====================================================================================
 

@@ -61,6 +61,10 @@ def play_video(video_path):
     height = 480
     video = VideoFileClip(video_path)
     video = video.resize((width, height))
+
+    # Set the audio of the video to None (no sound)
+    video = video.set_audio(None)
+    
     video.preview()
     
 
