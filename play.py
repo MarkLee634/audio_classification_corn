@@ -33,6 +33,25 @@ def visualize_trimmed_files():
 
     utils_audio.plot_time_domain_all_trial(total_trial_all_mic,fs)
 
+def visualize_trimmed_files_withlabel():
+    # LABELS AND TIME PLOT
+    # visualize all the trimmed audio
+    sync_load_directory = "/rosbag/audio/ISU_audio_dataset/insertion/dataset_field/sync_audio/"
+    total_list = numbers_list = [i for i in range(1, 26)]
+
+    #load labels
+    label_filename = "/home/marklee/github/audio_classification_corn/labels.yaml"
+
+    # Load YAML data from a file
+    with open(label_filename, 'r') as file:
+        labels = yaml.load(file, Loader=yaml.FullLoader)
+
+    print(f"labels {labels}")
+
+    #load saved npy files (indices from 1-25)
+    total_trial_all_mic = utils_audio.load_npy_files(sync_load_directory, total_list)
+    utils_audio.plot_time_domain_all_trial_withlabels(total_trial_all_mic,fs, labels)
+
 
 def convert_wav_to_npy():
     dataset_path = "/rosbag/audio/ISU_audio_dataset/insertion/dataset_field/"
@@ -117,6 +136,53 @@ def trim_audio_to_motor():
 
         utils_audio.plot_time_dmain_single_trial(trimmed_audio_all_mic)
 
+def trim_end_audio_to_clean():
+     # LABELS AND TIME PLOT
+    # visualize all the trimmed audio
+    sync_load_directory = "/rosbag/audio/ISU_audio_dataset/insertion/dataset_field/sync_audio/"
+    total_list = numbers_list = [i for i in range(1, 26)]
+
+    #load labels
+    label_filename = "/home/marklee/github/audio_classification_corn/labels.yaml"
+
+    # Load YAML data from a file
+    with open(label_filename, 'r') as file:
+        labels = yaml.load(file, Loader=yaml.FullLoader)
+
+    end_time_seconds = labels['audio_end_time']
+    print(f"end_time_seconds {end_time_seconds}")
+
+    #load saved npy files (indices from 1-25)
+    total_trial_all_mic = utils_audio.load_npy_files(sync_load_directory, total_list)
+
+
+    for index,audio_for_trial_i in enumerate (total_trial_all_mic):
+
+        #print out length before trim
+        print(f"length of audio before trim: {len(audio_for_trial_i[0])/fs}")
+        end_index = int(end_time_seconds[index]*fs)
+
+        trimmed_audio_all_mic = []
+        for mic_n in range(0,5):
+            
+            trimmed_audio = audio_for_trial_i[mic_n][0:end_index]
+            trimmed_audio_all_mic.append(trimmed_audio)
+        trimmed_audio_all_mic_np = np.array(trimmed_audio_all_mic)
+
+        print(f"length of audio after trim: {len(trimmed_audio_all_mic_np[0])/fs}")
+
+        #save trimmed audio
+        save_directory = "/rosbag/audio/ISU_audio_dataset/insertion/dataset_field/clean_trimmed_audio/"
+        save_filename = os.path.join(save_directory, f"t{index+1}.npy")
+        np.save(save_filename, trimmed_audio_all_mic_np)
+
+
+
+        #visualize correctness by plotting and printing
+
+        utils_audio.plot_time_dmain_single_trial(trimmed_audio_all_mic)
+    
+
 # convert npy to wav from trimmed files
 def convert_npy_to_wav():
     #visualize all the trimmed audio
@@ -161,18 +227,7 @@ def animate_timeplot_video():
             # Exit the loop if Ctrl+C is pressed
             break
 
-if __name__ == "__main__":
-    print(f" -------- start -------- ")
-
-    #1.preprocessing audio to trim npy files and then save wav file to play
-    # trim_raw_npy_files()
-    # visualize_trimmed_files()
-    # convert_npy_to_wav()
-
-    #2. animate time domain plot with audio and video
-    # animate_timeplot_video()
-    # =====================================================================================
-
+def animate_spectrogram():
     # Animate spectrogram
     sync_load_directory = "/rosbag/audio/ISU_audio_dataset/insertion/dataset_field/sync_audio/"
     move_load_directory = "/rosbag/audio/ISU_audio_dataset/insertion/dataset_field/trimmed_video/"
@@ -193,39 +248,37 @@ if __name__ == "__main__":
             video_filename = os.path.join(move_load_directory, f"{trial_input}.MOV")
 
             # Animate the time domain plot according to the keyboard input
-            utils_audio.animate_spectrogram(total_trial_all_mic[int(trial_input) - 1][0], fs, audio_filename, play_audio=True, play_video=True, video_filename=video_filename)
+            utils_audio.animate_spectrogram(total_trial_all_mic[int(trial_input) - 1][0], trial_input, fs, audio_filename, play_audio=True, play_video=True, video_filename=video_filename)
 
         except KeyboardInterrupt:
             # Exit the loop if Ctrl+C is pressed
             break
 
 
+if __name__ == "__main__":
+    print(f" -------- start -------- ")
 
+    #1.preprocessing audio to trim npy files and then save wav file to play
+    # trim_raw_npy_files()
+    # visualize_trimmed_files() OR # visualize_trimmed_files_withlabel()
+    # convert_npy_to_wav()
+    
 
+    #2. animate time domain plot with audio and video (choose 1 or the other)
+    # animate_timeplot_video() 
+    # OR
+    animate_spectrogram()
+    
+    # =====================================================================================
 
+    
 
     # =====================================================================================
-    # LABELS AND TIME PLOT
-    #visualize all the trimmed audio
-    # sync_load_directory = "/rosbag/audio/ISU_audio_dataset/insertion/dataset_field/sync_audio/"
-    # move_load_directory = "/rosbag/audio/ISU_audio_dataset/insertion/dataset_field/trimmed_video/"
-    # total_list = numbers_list = [i for i in range(1, 26)]
+    
+    #3. clip the end of audio from labels
+    # trim_end_audio_to_clean()
 
-    # #load labels
-    # label_filename = "/home/marklee/github/audio_classification_corn/labels.yaml"
-
-    # # Load YAML data from a file
-    # with open(label_filename, 'r') as file:
-    #     labels = yaml.load(file, Loader=yaml.FullLoader)
-
-    # print(f"labels {labels}")
-
-    # #load saved npy files (indices from 1-25)
-    # total_trial_all_mic = utils_audio.load_npy_files(sync_load_directory, total_list)
-    # utils_audio.plot_time_domain_all_trial_withlabels(total_trial_all_mic,fs, labels)
-
-    #3. take only the 
-
+   
     
     
     # =====================================================================================

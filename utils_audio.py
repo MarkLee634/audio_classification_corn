@@ -172,7 +172,7 @@ def load_npy_files(path_directory, input_file_list):
     return total_trials_all_mic
 
 # Function to animate spectrogram with vertical bar indicating the current time with the given audio 
-def animate_spectrogram(audio, fs, path_to_music_file=None, play_audio=False , play_video = False, video_filename = None):
+def animate_spectrogram(audio, trial_input, fs, path_to_music_file=None, play_audio=False , play_video = False, video_filename = None):
 
 
     def play_music(path):
@@ -192,7 +192,9 @@ def animate_spectrogram(audio, fs, path_to_music_file=None, play_audio=False , p
         video_thread.start()
 
     fig, ax = plt.subplots(figsize=(6, 4))
-    fig.suptitle('Spectrogram Animation (Mic 1)', y=1.0, fontsize=10)
+    #subtitle with the trial number
+    fig.suptitle(f"Spectrogram Mic1 Trial {trial_input}", fontsize=16)
+
 
     # Create the spectrogram
     D = librosa.stft(audio, hop_length=512, n_fft=2048)
@@ -230,7 +232,7 @@ def animate_spectrogram(audio, fs, path_to_music_file=None, play_audio=False , p
         
         if frame < 31:
             current_frame = frame*interval_msec/1000 +int(math.ceil(interval_msec/1000))
-            print(f" frame: {frame}, current_frame: {current_frame}")
+            # print(f" frame: {frame}, current_frame: {current_frame}")
             
             # Update the vertical line to the current time
             line.set_xdata(current_frame)
